@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>متجر أدوات تجميل — Aya Elsayed</title>
+  <style>
+    :root{--accent:#e91e63;--bg:#fafafa;--card:#fff;--muted:#666}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif;background:var(--bg);margin:0;color:#222}
+    header{background:linear-gradient(90deg,#fff 0,#ffeef6 100%);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:48px;height:48px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    h1{margin:0;font-size:18px}
+    .search{flex:1;max-width:520px;margin:0 16px}
+    .search input{width:100%;padding:10px;border-radius:10px;border:1px solid #e7e7e7}
+    .actions{display:flex;gap:8px;align-items:center}
+    button{background:var(--accent);color:#fff;border:none;padding:8px 12px;border-radius:10px;cursor:pointer}
+    .secondary{background:#fff;color:var(--accent);border:1px solid #ffd6e6}
+    main{padding:20px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+    .card{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;flex-direction:column}
+    .card img{width:100%;height:180px;object-fit:cover;border-radius:8px}
+    .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+    .price{font-weight:700;color:var(--accent)}
+    .muted{color:var(--muted);font-size:13px}
+    .cart-drawer{position:fixed;left:20px;bottom:20px;background:var(--card);border-radius:14px;padding:12px;box-shadow:0 6px 20px rgba(0,0,0,0.12);width:320px;max-width:90%;}
+    .cart-drawer h3{margin:0 0 8px 0}
+    .cart-items{max-height:280px;overflow:auto}
+    .cart-item{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0}
+    .cart-item img{width:48px;height:48px;object-fit:cover;border-radius:6px}
+    .qty{display:flex;gap:6px;align-items:center}
+    .footer{margin-top:12px;display:flex;justify-content:space-between;align-items:center}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px}
+    .modal .box{background:var(--card);padding:16px;border-radius:12px;max-width:720px;width:100%}
+    .admin-panel{background:linear-gradient(180deg,#fff 0,#fff7fb 100%);padding:12px;border-radius:12px}
+    .form-row{display:flex;gap:8px;margin-bottom:8px}
+    .form-row input, .form-row textarea{flex:1;padding:8px;border-radius:8px;border:1px solid #eee}
+    .small{font-size:13px;color:var(--muted)}
+    footer{padding:14px 20px;text-align:center;color:var(--muted)}
+    @media (max-width:600px){header{flex-direction:column;align-items:flex-start} .search{max-width:100%;width:100%}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo"><img src="photo_5980986184861600390_x.jpg" style="border-radius: 50%; width:70px;" alt=""></div>
+      <div>
+        <h1>Aya Elsayed — متجر أدوات تجميل</h1>
+        <div class="small">منتجات أصلية — خدمة عملاء سريعة — دفع عند الاستلام</div>
+      </div>
+    </div>
+
+    <div class="search">
+      <input id="search" placeholder="ابحث عن المنتج أو الماركة...">
+    </div>
+
+    <div class="actions">
+      <!-- زر السلة يبقى متاح للمستخدم -->
+      <button id="toggleCart">السلة (<span id="cartCount">0</span>)</button>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>منتجاتنا</h2>
+      <div class="grid" id="productsGrid">
+        <!-- تولد بالجافاسكربت -->
+      </div>
+    </section>
+  </main>
+
+  <!-- سلة الشراء (مخفية افتراضياً) -->
+  <div id="cartDrawer" class="cart-drawer" style="display:none;z-index:60">
+    <h3>سلة الطلب</h3>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="footer">
+      <div>
+        <div class="small">الإجمالي:</div>
+        <div style="font-weight:800;font-size:18px" id="cartTotal">0 ج.م</div>
+      </div>
+      <div>
+        <button id="checkoutBtn">الدفع عبر واتساب</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال عرض منتج -->
+  <div id="modal" class="modal" style="display:none;z-index:70">
+    <div class="box">
+      <button id="closeModal" style="float:left">إغلاق</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <!-- لوحة الأدمن (مخفية تمامًا، ستظهر فقط بعد الوصول لـ #admin وادخال الباسورد) -->
+  <div id="adminModal" class="modal" style="display:none;z-index:80;pointer-events:auto;">
+    <div class="box admin-panel">
+      <button id="closeAdmin" style="float:left">إغلاق</button>
+      <h3>لوحة إدارة المتجر</h3>
+      <div class="small">أضف/حرر/احذف منتجات — محليًا (محفوظة في المتصفح).</div>
+      <hr>
+      <div>
+        <h4>إضافة منتج جديد</h4>
+        <div class="form-row">
+          <input id="pTitle" placeholder="اسم المنتج">
+          <input id="pPrice" placeholder="السعر (ج.م)">
+        </div>
+        <div class="form-row">
+          <input type="file" id="pImageFile" accept="image/*">
+          <input id="pStock" placeholder="الكمية" value="10">
+        </div>
+        <div class="form-row">
+          <textarea id="pDesc" placeholder="وصف المنتج"></textarea>
+        </div>
+        <button id="addProductBtn">أضف المنتج</button>
+      </div>
+      <hr>
+      <div>
+        <h4>قائمة المنتجات (اضغط لتعديل)</h4>
+        <div id="adminList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة تعديل المنتج -->
+  <div id="editModal" class="modal" style="display:none;z-index:90">
+    <div class="box admin-panel">
+      <button id="closeEdit" style="float:left">إغلاق</button>
+      <h3>تعديل المنتج</h3>
+      <div class="form-row">
+        <input id="eTitle" placeholder="اسم المنتج">
+        <input id="ePrice" placeholder="السعر (ج.م)">
+      </div>
+      <div class="form-row">
+        <input type="file" id="eImageFile" accept="image/*">
+        <input id="eStock" placeholder="الكمية">
+      </div>
+      <div class="form-row">
+        <textarea id="eDesc" placeholder="وصف المنتج"></textarea>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button id="saveEditBtn">حفظ التعديلات</button>
+        <button id="deleteBtn" style="background:#e53935">حذف المنتج</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    © 2025 متجر أدوات التجميل
+    <!-- مفيش لينك لوحة تحكم هنا — مخفي تمامًا -->
+  </footer>
+
+  <script>
+    /********* CONFIG *********/
+    const CONFIG = {
+      whatsappNumber: '201144382584', // غيّر لرقمك لو حابب
+      adminPassword: 'yoyo123@@@' // غيّر الباسورد لو تحب
+    };
+    /**************************/
+
+    // عناصر وبيانات
+    const $ = id => document.getElementById(id);
+    const defaultProducts = [
+      {id:1,title:'مرطب كوزمتكس',price:85,desc:'مرطب غني بالفيتامينات ومرطب لمدة طويلة',img:'كوزمتكس.jpeg',stock:20},
+      {id:2,title:'قلم كحل أسود',price:120,desc:'كحل غني وثابت مع فرشاة دقيقة',img:'https://images.unsplash.com/photo-1582452923517-9a3d9a5f6b88?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&s=2',stock:15},
+      {id:3,title:'بودرة مضغوطة',price:199,desc:'ثبات عالي ومظهر مخملي',img:'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&s=3',stock:12},
+      {id:4,title:'طقم فرش مكياج',price:450,desc:'مجموعة فرش احترافية 10 قطع',img:'https://images.unsplash.com/photo-1585155772695-3a3bff7f0b2b?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&s=4',stock:8}
+    ];
+
+    function loadProducts(){
+      const raw = localStorage.getItem('ab_products');
+      if(!raw){ localStorage.setItem('ab_products', JSON.stringify(defaultProducts)); return defaultProducts }
+      try{ return JSON.parse(raw) }catch(e){ localStorage.setItem('ab_products', JSON.stringify(defaultProducts)); return defaultProducts }
+    }
+    function saveProducts(products){ localStorage.setItem('ab_products', JSON.stringify(products)) }
+
+    let products = loadProducts();
+    let cart = JSON.parse(localStorage.getItem('ab_cart')||'[]');
+
+    // Render
+    function renderProducts(filter=''){
+      const grid = $('productsGrid'); grid.innerHTML='';
+      const list = products.filter(p=> (p.title+ ' '+p.desc).toLowerCase().includes(filter.toLowerCase()));
+      if(list.length===0) grid.innerHTML='<div class="small">لا توجد منتجات مطابقة.</div>';
+      list.forEach(p=>{
+        const div = document.createElement('div'); div.className='card';
+        div.innerHTML = `
+          <img src="${p.img}" alt="${p.title}" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
+          <h3 style="margin:8px 0 0 0">${p.title}</h3>
+          <div class="meta">
+            <div class="muted">${p.desc.slice(0,60)}${p.desc.length>60?'...':''}</div>
+            <div class="price">${p.price} ج.م</div>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <button onclick="openProduct(${p.id})">عرض</button>
+            <button onclick="addToCart(${p.id})" class="secondary">أضف للسلة</button>
+          </div>
+        `;
+        grid.appendChild(div);
+      })
+    }
+
+    function openProduct(id){
+      const p = products.find(x=>x.id===id); if(!p) return;
+      $('modalContent').innerHTML = `
+        <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+          <img src="${p.img}" style="width:280px;height:280px;object-fit:cover;border-radius:10px" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
+          <div style="flex:1">
+            <h2>${p.title}</h2>
+            <div class="small">${p.desc}</div>
+            <h3 style="color:var(--accent);margin-top:12px">${p.price} ج.م</h3>
+            <div class="small">المتوفر: ${p.stock}</div>
+            <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+              <input id="qtyInput" type="number" value="1" min="1" max="${p.stock}" style="width:80px;padding:8px;border-radius:8px;border:1px solid #eee">
+              <button onclick="addToCart(${p.id}, parseInt(document.getElementById('qtyInput').value||1))">أضف للسلة</button>
+            </div>
+          </div>
+        </div>
+      `;
+      $('modal').style.display='flex';
+    }
+
+    // Cart functions
+    function saveCart(){ localStorage.setItem('ab_cart', JSON.stringify(cart)); renderCart(); }
+    function addToCart(id, qty=1){
+      const p = products.find(x=>x.id===id); if(!p) return alert('المنتج غير موجود');
+      const found = cart.find(i=>i.id===id);
+      if(found){ found.qty += qty; if(found.qty>p.stock) found.qty=p.stock }
+      else cart.push({id:id,qty:qty});
+      saveCart(); updateCartCount(); alert('تمت الإضافة للسلة');
+    }
+    function updateCartCount(){ $('cartCount').innerText = cart.reduce((s,i)=>s+i.qty,0) }
+    function renderCart(){
+      const el = $('cartItems'); el.innerHTML='';
+      if(cart.length===0){ el.innerHTML='<div class="small">السلة فارغة</div>'; $('cartTotal').innerText='0 ج.م'; return }
+      let total=0;
+      cart.forEach(ci=>{
+        const p = products.find(x=>x.id===ci.id) || {title:'منتج محذوف',price:0,img:'https://via.placeholder.com/48'};
+        total += p.price * ci.qty;
+        const row = document.createElement('div'); row.className='cart-item';
+        row.innerHTML = `
+          <img src="${p.img}" onerror="this.src='https://via.placeholder.com/48'">
+          <div style="flex:1">
+            <div style="font-weight:700">${p.title}</div>
+            <div class="small">${p.price} ج.م</div>
+          </div>
+          <div class="qty">
+            <button onclick="changeQty(${ci.id}, -1)">-</button>
+            <div>${ci.qty}</div>
+            <button onclick="changeQty(${ci.id}, 1)">+</button>
+            <button onclick="removeFromCart(${ci.id})" style="margin-left:6px" class="secondary">حذف</button>
+          </div>
+        `;
+        el.appendChild(row);
+      })
+      $('cartTotal').innerText = total + ' ج.م';
+    }
+    function changeQty(id, delta){ const it = cart.find(i=>i.id===id); if(!it) return; const p = products.find(x=>x.id===id); it.qty += delta; if(it.qty<1) it.qty=1; if(it.qty>p.stock) it.qty=p.stock; saveCart(); updateCartCount(); }
+    function removeFromCart(id){ cart = cart.filter(i=>i.id!==id); saveCart(); updateCartCount(); }
+
+    // Checkout -> WhatsApp
+    function checkout(){
+      if(cart.length===0) return alert('السلة فارغة');
+      let total = 0; let text = 'طلب%20جديد%20من%20Aya%20Beauty%5Cn%5Cn';
+      cart.forEach(ci=>{ const p = products.find(x=>x.id===ci.id) || {title:'منتج محذوف',price:0}; total += p.price*ci.qty; text += `${encodeURIComponent('اسم المنتج:')}%20${encodeURIComponent(p.title)}%20x${ci.qty}%20%20%20${encodeURIComponent('السعر:')}%20${p.price}ج.م%5Cn`; });
+      text += `%5Cn${encodeURIComponent('الإجمالي:')}%20${total}ج.م%5Cn%5Cn${encodeURIComponent('الاسم:')}%20%0A${encodeURIComponent('العنوان:')}%20%0A${encodeURIComponent('ملاحظات:')}%20%0A`;
+      const wa = `https://wa.me/${CONFIG.whatsappNumber}?text=${text}`;
+      window.open(wa, '_blank');
+    }
+
+    // Admin (محلي - مخفي)
+    function openAdminIfHash(){
+      // فقط لو الهاش #admin
+      if(window.location.hash === '#admin'){
+        const pass = prompt('ادخل كلمة سر الأدمن:');
+        if(pass !== CONFIG.adminPassword){ alert('كلمة السر خاطئة'); return }
+        // اعرض اللوحة
+        $('adminModal').style.display = 'flex';
+        renderAdminList();
+      }
+    }
+
+    function renderAdminList(){
+      const list = $('adminList'); list.innerHTML='';
+      products.forEach(p=>{
+        const div = document.createElement('div'); div.style.padding='8px 0'; div.style.borderBottom='1px solid #f4f4f4';
+        div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+          <div><strong>${p.title}</strong><div class='small'>${p.price} ج.م — ${p.stock} متاح</div></div>
+          <div>
+            <button onclick='editProduct(${p.id})' class='secondary'>تعديل</button>
+            <button onclick='deleteProduct(${p.id})' style='background:#e53935;border:none;color:#fff;padding:6px 8px;border-radius:8px;margin-left:6px'>حذف</button>
+          </div>
+        </div>`;
+        list.appendChild(div);
+      })
+    }
+
+    function addProduct(){
+      const t = $('pTitle').value.trim();
+      const price = parseFloat($('pPrice').value)||0;
+      const stock = parseInt($('pStock').value)||0;
+      const desc = $('pDesc').value.trim();
+      const fileInput = $('pImageFile');
+      let img = 'https://via.placeholder.com/400x300?text=Product';
+
+      if(fileInput.files && fileInput.files[0]){
+        const reader = new FileReader();
+        reader.onload = function(e){
+          img = e.target.result;
+          finalizeAdd(t,price,stock,desc,img);
+        }
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        finalizeAdd(t,price,stock,desc,img);
+      }
+    }
+
+    function finalizeAdd(t,price,stock,desc,img){
+      if(!t) return alert('اكتب اسم المنتج');
+      const id = products.length? Math.max(...products.map(p=>p.id))+1:1;
+      products.push({id:id,title:t,price:price,desc:desc,img:img,stock:stock});
+      saveProducts(products);
+      renderProducts();
+      renderAdminList();
+      alert('تمت الإضافة');
+      $('pTitle').value=''; $('pPrice').value=''; $('pStock').value=''; $('pDesc').value=''; $('pImageFile').value='';
+    }
+
+    function editProduct(id){
+      const p = products.find(x=>x.id===id); if(!p) return;
+      editId = id;
+      $('eTitle').value = p.title; $('ePrice').value = p.price; $('eStock').value = p.stock; $('eDesc').value = p.desc; $('eImageFile').value = '';
+      $('editModal').style.display = 'flex';
+    }
+
+    function deleteProduct(id){
+      if(!confirm('هل متأكد من حذف المنتج؟')) return;
+      products = products.filter(p=>p.id!==id);
+      saveProducts(products);
+      renderProducts();
+      renderAdminList();
+    }
+
+    // Save edit
+    let editId = null;
+    $('saveEditBtn').onclick = ()=>{
+      const p = products.find(x=>x.id===editId); if(!p) return;
+      p.title = $('eTitle').value.trim(); p.price = parseFloat($('ePrice').value)||0; p.stock = parseInt($('eStock').value)||0; p.desc = $('eDesc').value.trim();
+      const fileInput = $('eImageFile');
+      if(fileInput.files && fileInput.files[0]){
+        const reader = new FileReader();
+        reader.onload = function(e){
+          p.img = e.target.result;
+          saveProducts(products); renderProducts(); renderAdminList(); $('editModal').style.display='none';
+        }
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        saveProducts(products); renderProducts(); renderAdminList(); $('editModal').style.display='none';
+      }
+    }
+
+    $('deleteBtn').onclick = ()=>{
+      if(confirm('هل أنت متأكد من حذف المنتج؟')){
+        products = products.filter(p=>p.id!==editId);
+        saveProducts(products);
+        renderProducts();
+        renderAdminList();
+        $('editModal').style.display='none';
+      }
+    }
+
+    // Events
+    $('search').addEventListener('input', e=>renderProducts(e.target.value));
+    $('toggleCart').addEventListener('click', ()=>{ const d = $('cartDrawer'); d.style.display = d.style.display==='none'?'block':'none'; renderCart(); });
+    $('closeModal').addEventListener('click', ()=>$('modal').style.display='none');
+    $('checkoutBtn').addEventListener('click', checkout);
+    window.openProduct = openProduct; window.addToCart = addToCart; window.changeQty = changeQty; window.removeFromCart = removeFromCart;
+    window.editProduct = editProduct; window.deleteProduct = deleteProduct; window.addProduct = addProduct; window.checkout = checkout;
+
+    $('addProductBtn').addEventListener('click', addProduct);
+    $('closeAdmin').addEventListener('click', ()=>$('adminModal').style.display='none');
+    $('closeEdit').addEventListener('click', ()=>$('editModal').style.display='none');
+
+    // initial
+    renderProducts(); renderCart(); updateCartCount();
+
+    // تحقق من الهش لوحة الأدمن (مخفيّة)
+    openAdminIfHash();
+  </script>
+</body>
+</html>
